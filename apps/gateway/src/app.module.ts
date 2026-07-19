@@ -6,6 +6,7 @@ import { MediaController } from './media/media.controller';
 import { MeetingsController } from './meetings/meetings.controller';
 import { MeetingsService } from './meetings/meetings.service';
 import { PresenceController } from './ws/presence.controller';
+import { PushController } from './push/push.controller';
 import { PushService } from './push/push.service';
 import { UsersController } from './users/users.controller';
 import { WsService } from './ws/ws.service';
@@ -17,7 +18,7 @@ import { WsService } from './ws/ws.service';
  */
 @Module({
   imports: [AdaptersModule, AuthModule, ChatModule],
-  controllers: [MediaController, MeetingsController, PresenceController, UsersController],
+  controllers: [MediaController, MeetingsController, PresenceController, PushController, UsersController],
   providers: [MeetingsService, PushService, WsService],
 })
 export class AppModule {}

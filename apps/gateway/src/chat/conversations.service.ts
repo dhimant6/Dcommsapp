@@ -152,6 +152,36 @@ export class ConversationsService {
     return all.find((c) => c.id === conversationId);
   }
 
+  /** Message search, the honest small-scale version: ILIKE over the JSONB
+   *  body, scoped to my conversations via the membership join (authorization
+   *  and filtering in one clause). This is exactly the query the README says
+   *  won't survive scale — the upgrade path is an async index (pg_trgm GIN
+   *  first, then external search), same endpoint contract. */
+  async search(meId: string, q: string, limit = 30) {
+    const term = (q ?? '').trim();
+    if (!term) return [];
+    const pattern = '%' + term.replace(/[\\%_]/g, '\\$&') + '%';
+    const { rows } = await this.db.query(
+      `SELECT m.id, m.conversation_id, m.sender_id, m.content, m.created_at,
+              u.display_name AS sender_name
+       FROM messages m
+       JOIN conversation_members cm ON cm.conversation_id = m.conversation_id AND cm.user_id = $1
+       JOIN users u ON u.id = m.sender_id
+       WHERE m.deleted_at IS NULL AND m.type = 'text'
+         AND m.content->>'body' ILIKE $2
+       ORDER BY m.created_at DESC LIMIT $3`,
+      [meId, pattern, Math.min(Math.max(limit, 1), 100)],
+    );
+    return rows.map((m: any) => ({
+      serverMsgId: m.id,
+      conversationId: m.conversation_id,
+      senderId: m.sender_id,
+      senderName: m.sender_name,
+      body: (typeof m.content === 'string' ? JSON.parse(m.content) : m.content)?.body ?? '',
+      createdAt: new Date(m.created_at).getTime(),
+    }));
+  }
+
   /** THE offline-sync endpoint. `since` (ms) = newest message the client has;
    *  idempotent and resumable — the client can call it after every reconnect
    *  and duplicates are impossible by construction (upsert by id client-side). */

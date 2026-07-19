@@ -5,3 +5,4 @@ dist/
 *.log
 data/
 # data/ = local runtime state (PGlite db, uploaded media) for the no-Docker mode
+.tmp-data/

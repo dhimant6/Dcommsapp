@@ -229,6 +229,18 @@ describe('chat pipeline', () => {
     expect(missed[0].content.body).toBe('while you were away');
   });
 
+  test('message search finds my messages, scoped to my conversations', async () => {
+    const hits = await rest('GET', '/api/messages/search?q=hello%20bob', undefined, bob.access);
+    expect(hits.length).toBeGreaterThanOrEqual(1);
+    expect(hits[0].body).toBe('hello bob');
+    expect(hits[0].conversationId).toBe(convId);
+    // A stranger searching the same term sees nothing — the membership join
+    // is the authorization.
+    const outsider = await signup('+15551110004', 'Outsider');
+    const none = await rest('GET', '/api/messages/search?q=hello%20bob', undefined, outsider.access);
+    expect(none).toHaveLength(0);
+  });
+
   test('non-members cannot send into a conversation', async () => {
     const eve = await signup('+15551110003', 'Eve');
     const wsE = new TestClient();

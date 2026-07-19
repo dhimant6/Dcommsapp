@@ -39,6 +39,8 @@ label { font-size: 13px; color: var(--muted); }
 .ws-dot.open { background: #28a745; }
 .ws-dot.connecting { background: #ffc107; }
 .ws-dot.closed { background: var(--danger); }
+.search-box { padding: 8px 12px; background: var(--panel); border-bottom: 1px solid #f0f0f0; }
+.search-box input { margin: 0; background: #f0f2f5; border: none; border-radius: 8px; font-size: 14px; }
 .conv-list { overflow-y: auto; flex: 1; }
 .conv-row { display: flex; align-items: center; gap: 12px; padding: 12px 16px; cursor: pointer; border-bottom: 1px solid #f5f5f5; }
 .conv-row:hover, .conv-row.active { background: #f0f2f5; }
@@ -66,6 +68,29 @@ label { font-size: 13px; color: var(--muted); }
 .composer { display: flex; gap: 8px; padding: 12px 16px; background: #f0f2f5; }
 .composer input[type="text"], .composer input:not([type]) { flex: 1; margin: 0; }
 .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,.4); display: grid; place-items: center; z-index: 30; }
+
+.back-btn { display: none; background: none; color: var(--brand-dark); font-size: 22px; padding: 4px 10px 4px 0; line-height: 1; }
+.thread-header { gap: 4px; }
+.thread-title { flex: 1; min-width: 0; }
+.thread-title strong { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* ---------- mobile: WhatsApp stacked navigation (list → thread) ---------- */
+@media (max-width: 768px) {
+  .chat-layout { grid-template-columns: 1fr; height: 100dvh; }
+  .chat-layout .thread { display: none; }
+  .chat-layout.conv-open .sidebar { display: none; }
+  .chat-layout.conv-open .thread { display: flex; height: 100dvh; }
+  .back-btn { display: inline-block; }
+  .msg-scroll { padding: 12px; }
+  .bubble { max-width: 82%; }
+  .msg-img { max-width: 100%; }
+  .thread-header, .composer { padding: 10px 12px; }
+  .thread-actions { gap: 4px; }
+  .card { min-width: 0; width: calc(100vw - 32px); max-width: 360px; }
+  .local-video { width: 104px; bottom: 88px; right: 12px; }
+  .call-stage { width: 100vw; height: 100dvh; }
+  .remote-video { border-radius: 0; }
+}
 
 /* ---------- 1:1 call overlay ---------- */
 .call-overlay { position: fixed; inset: 0; background: rgba(17,27,33,.92); display: grid; place-items: center; z-index: 40; }

@@ -40,6 +40,12 @@ export const config = {
    *  turns "public demo" into "invite-only demo" with one env var. */
   gateCode: process.env.GATE_CODE || undefined,
 
+  /** Web Push (VAPID). Optional: when unset, a keypair is generated once and
+   *  persisted to DATA_DIR/vapid.json. Set explicitly on hosts where the data
+   *  dir is ephemeral, or old subscriptions die on every deploy. */
+  vapidPublicKey: process.env.VAPID_PUBLIC_KEY || undefined,
+  vapidPrivateKey: process.env.VAPID_PRIVATE_KEY || undefined,
+
   databaseUrl: process.env.DATABASE_URL,
   redisUrl: process.env.REDIS_URL,
 

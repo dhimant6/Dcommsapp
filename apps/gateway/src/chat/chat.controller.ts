@@ -22,6 +22,11 @@ export class ChatController {
     return this.convs.createGroup(req.auth.userId, body?.title ?? '', body?.memberPhones ?? []);
   }
 
+  @Get('messages/search')
+  search(@Req() req: any, @Query('q') q?: string, @Query('limit') limit?: string) {
+    return this.convs.search(req.auth.userId, q ?? '', limit ? parseInt(limit, 10) : 30);
+  }
+
   /** Offline sync + pagination. since = "give me what I missed" (reconnect);
    *  before = "give me older" (scroll-up). Mutually exclusive by design. */
   @Get('conversations/:id/messages')

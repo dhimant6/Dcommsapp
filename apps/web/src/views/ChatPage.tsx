@@ -1,13 +1,58 @@
 import { FormEvent, useEffect, useRef, useState } from 'react';
 import { api, uploadMedia } from '../api';
+import { enablePush } from '../push';
 import { wsSend } from '../socket';
 import { Conv, UiMessage, useStore } from '../store';
 import { CallOverlay } from './CallOverlay';
 
-/** WhatsApp-shaped personal mode: sidebar + thread + composer. */
+/** WhatsApp-shaped personal mode: sidebar + thread + composer.
+ *  On narrow screens the layout becomes stacked navigation (list → thread with
+ *  a back arrow), driven purely by the `conv-open` class + CSS media query. */
+
+// One history entry backs the mobile list→thread navigation, so the Android
+// back gesture closes the thread instead of leaving the app.
+let pushedHistory = false;
+
+export function openConversation(id: string) {
+  const st = useStore.getState();
+  if (!pushedHistory) {
+    history.pushState({ dcomThread: true }, '');
+    pushedHistory = true;
+  }
+  st.set({ activeConvId: id });
+}
+
+function closeConversation() {
+  if (pushedHistory) history.back();
+  else useStore.getState().set({ activeConvId: null });
+}
+
+interface SearchHit {
+  serverMsgId: string;
+  conversationId: string;
+  senderName: string;
+  body: string;
+  createdAt: number;
+}
+
 export function ChatPage() {
   const s = useStore();
   const [showNewChat, setShowNewChat] = useState(false);
+  const [query, setQuery] = useState('');
+  const [hits, setHits] = useState<SearchHit[] | null>(null);
+
+  // Debounced server-side search; empty query returns to the normal list.
+  useEffect(() => {
+    const q = query.trim();
+    if (q.length < 2) {
+      setHits(null);
+      return;
+    }
+    const t = setTimeout(() => {
+      void api<SearchHit[]>('GET', `/api/messages/search?q=${encodeURIComponent(q)}`).then(setHits).catch(() => setHits([]));
+    }, 250);
+    return () => clearTimeout(t);
+  }, [query]);
 
   useEffect(() => {
     void api<Conv[]>('GET', '/api/conversations').then((convs) => {
@@ -21,13 +66,23 @@ export function ChatPage() {
         );
       }
     });
+    void enablePush(); // best-effort: notifications for messages that arrive while the app is closed
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    const onPop = () => {
+      pushedHistory = false;
+      useStore.getState().set({ activeConvId: null });
+    };
+    window.addEventListener('popstate', onPop);
+    return () => window.removeEventListener('popstate', onPop);
   }, []);
 
   const active = s.conversations.find((c) => c.id === s.activeConvId) ?? null;
 
   return (
-    <div className="chat-layout">
+    <div className={`chat-layout ${active ? 'conv-open' : ''}`}>
       <aside className="sidebar">
         <header className="sidebar-header">
           <div>
@@ -36,11 +91,35 @@ export function ChatPage() {
           </div>
           <button className="small" onClick={() => setShowNewChat(true)}>+ New</button>
         </header>
+        <div className="search-box">
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="🔍 Search messages"
+          />
+        </div>
         <div className="conv-list">
-          {s.conversations.map((c) => (
-            <ConvRow key={c.id} conv={c} />
-          ))}
-          {s.conversations.length === 0 && <p className="muted pad">No chats yet — start one with “+ New”.</p>}
+          {hits !== null ? (
+            <>
+              {hits.map((h) => (
+                <div key={h.serverMsgId} className="conv-row" onClick={() => { openConversation(h.conversationId); setQuery(''); }}>
+                  <div className="conv-meta">
+                    <div className="conv-title">{h.senderName}</div>
+                    <div className="conv-preview muted">{h.body}</div>
+                  </div>
+                  <span className="muted small-text">{new Date(h.createdAt).toLocaleDateString()}</span>
+                </div>
+              ))}
+              {hits.length === 0 && <p className="muted pad">No messages match “{query.trim()}”.</p>}
+            </>
+          ) : (
+            <>
+              {s.conversations.map((c) => (
+                <ConvRow key={c.id} conv={c} />
+              ))}
+              {s.conversations.length === 0 && <p className="muted pad">No chats yet — start one with “+ New”.</p>}
+            </>
+          )}
         </div>
       </aside>
       {active ? <Thread conv={active} /> : <div className="thread empty muted">Select a conversation</div>}
@@ -70,7 +149,7 @@ function ConvRow({ conv }: { conv: Conv }) {
   return (
     <div
       className={`conv-row ${s.activeConvId === conv.id ? 'active' : ''}`}
-      onClick={() => useStore.getState().set({ activeConvId: conv.id })}
+      onClick={() => openConversation(conv.id)}
     >
       <div className="avatar">{(conv.title ?? '?').slice(0, 1).toUpperCase()}{online && <span className="online-dot" />}</div>
       <div className="conv-meta">
@@ -152,7 +231,8 @@ function Thread({ conv }: { conv: Conv }) {
   return (
     <main className="thread">
       <header className="thread-header">
-        <div>
+        <button className="back-btn" aria-label="Back to chats" onClick={closeConversation}>←</button>
+        <div className="thread-title">
           <strong>{conv.title}</strong>
           <div className="muted small-text">
             {typingNames.length
@@ -271,7 +351,7 @@ function NewChatModal({ onClose }: { onClose: () => void }) {
     try {
       const conv = await api<Conv>('POST', '/api/conversations/direct', { peerPhone: phone });
       useStore.getState().upsertConv(conv);
-      useStore.getState().set({ activeConvId: conv.id });
+      openConversation(conv.id);
       onClose();
     } catch (err: any) {
       setError(err.message);

@@ -13,3 +13,33 @@ self.addEventListener('activate', (e) => e.waitUntil(self.clients.claim()));
 self.addEventListener('fetch', () => {
   /* network passthrough — deliberately no caching for a realtime app */
 });
+
+// Web Push: payload is a doorbell ({title, body, conversationId}), never the
+// message itself — recovery is the app's ?since= sync when it opens.
+self.addEventListener('push', (e) => {
+  let data = { title: 'Dcom', body: 'New message', conversationId: '' };
+  try {
+    data = { ...data, ...e.data.json() };
+  } catch {
+    /* keep defaults */
+  }
+  e.waitUntil(
+    self.registration.showNotification(data.title, {
+      body: data.body,
+      icon: '/icon-192.png',
+      badge: '/icon-192.png',
+      tag: data.conversationId || 'dcom', // collapse per-conversation
+      data: { conversationId: data.conversationId },
+    }),
+  );
+});
+
+self.addEventListener('notificationclick', (e) => {
+  e.notification.close();
+  e.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((wins) => {
+      if (wins[0]) return wins[0].focus();
+      return self.clients.openWindow('/#/chat');
+    }),
+  );
+});
