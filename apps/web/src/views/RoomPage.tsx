@@ -59,6 +59,9 @@ function Hub() {
 
   return (
     <div className="kiosk-hub">
+      {/* A real wall panel would never leave kiosk mode; on a phone/laptop
+          demoing both personalities, this is the way home. */}
+      <button className="kiosk-exit" onClick={() => { location.hash = '#/chat'; }}>💬 Back to chat</button>
       <div className="kiosk-clock">
         <div className="time">{now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
         <div className="date muted">{now.toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric' })}</div>

@@ -89,7 +89,10 @@ export function ChatPage() {
             <strong>{s.user!.displayName}</strong>
             <span className={`ws-dot ${s.wsStatus}`} title={`socket: ${s.wsStatus}`} />
           </div>
-          <button className="small" onClick={() => setShowNewChat(true)}>+ New</button>
+          <div className="sidebar-actions">
+            <button className="small" title="Switch to room / kiosk mode" onClick={() => { location.hash = '#/room'; }}>📺</button>
+            <button className="small" onClick={() => setShowNewChat(true)}>+ New</button>
+          </div>
         </header>
         <div className="search-box">
           <input

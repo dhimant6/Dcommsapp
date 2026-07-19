@@ -107,7 +107,9 @@ label { font-size: 13px; color: var(--muted); }
 .center-page.kiosk { background: #0b141a; }
 .center-page.kiosk .card { background: #202c33; color: #e9edef; }
 .center-page.kiosk h1 { color: #60a5fa; }
-.kiosk-hub { display: grid; grid-template-rows: 1fr auto; min-height: 100vh; padding: 6vh 8vw; }
+.kiosk-hub { display: grid; grid-template-rows: 1fr auto; min-height: 100vh; padding: 6vh 8vw; position: relative; }
+.kiosk-exit { position: absolute; top: 20px; right: 24px; background: #2a3942; color: #e9edef; font-size: 14px; padding: 8px 14px; }
+.sidebar-actions { display: flex; gap: 6px; }
 .kiosk-clock .time { font-size: 96px; font-weight: 200; }
 .kiosk-clock .date { font-size: 24px; }
 .kiosk-clock .room-name { font-size: 32px; margin-top: 24px; color: #60a5fa; font-weight: 600; }
