@@ -74,14 +74,26 @@ this is the same property that makes the gateway horizontally scalable.
 | 4 | **Mesh CPU/uplink** | N·(N−1) encodes; dies ≈4 video peers | LiveKit SFU per docs/mtr-mode.md — room signaling is already SFU-shaped |
 | 5 | **TURN bandwidth** | relayed calls cost full media egress | regional coturn fleet, geo-DNS |
 
+## Built since the MVP
+
+- **Mobile-responsive WhatsApp navigation** — on phones the web app becomes
+  stacked list→thread navigation with a back arrow; one pushed history entry
+  makes the Android back gesture close the thread instead of the app
+- **Message search** — `GET /api/messages/search`, ILIKE over the JSONB body
+  with the membership join as authorization (the honest small-scale version;
+  the upgrade path is pg_trgm GIN → external index, same contract)
+- **Web Push (VAPID)** — `push.service.ts` really sends now; subscriptions per
+  device, dead ones pruned on 410, keys auto-generated into `DATA_DIR`
+- **Mobile chat screens** — the Expo app's list + room render from SQLite via
+  the four-rule sync model (see `apps/mobile/README.md`)
+
 ## What I didn't build (deliberately)
 
-- **Message search** (needs async indexing; JSONB `LIKE` doesn't survive scale)
 - **Media pipeline** (thumbnails/transcoding/EXIF-strip: S3-event → ffmpeg workers)
 - **E2EE** (protocol supports it — server never parses `content`; Double Ratchet
   would slot in client-side; key transparency + multi-device sessions are the hard part)
-- **Real FCM/APNs push** (decision logic + full contract in `push.service.ts`; the
-  HTTP call is the trivial 10%)
+- **Native FCM/APNs push** (Web Push is live; the native tokens ride the same
+  `devices.push_token` column when the mobile app ships to stores)
 - **Calendar integration for rooms** (real MTR shows the day's bookings; needs
   Graph/Google Calendar OAuth — the hub screen has the slot for it)
 - **Abuse/moderation, GDPR deletion, observability** — see docs/architecture.md
