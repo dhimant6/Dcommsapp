@@ -1,0 +1,37 @@
+# CI: build + full e2e on every push. No service containers needed — the test
+# suite boots the gateway on EMBEDDED adapters (in-memory PGlite/KV), which is
+# the ports-and-adapters layer paying rent: the pipeline stays a 2-minute
+# `npm test` instead of a docker-compose orchestration.
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - name: Typecheck web
+        run: npx tsc -p apps/web/tsconfig.json
+      - name: Build gateway + web
+        run: npm run build
+      - name: E2E tests (embedded adapters)
+        run: npm test
+
+  # Staging deploy stub — activate by adding registry creds + a staging host.
+  # deploy-staging:
+  #   needs: build-and-test
+  #   if: github.ref == 'refs/heads/main'
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - run: docker build -f apps/gateway/Dockerfile -t ghcr.io/${{ github.repository }}/gateway:${{ github.sha }} .
+  #     - run: echo "push to registry, then: ssh staging 'docker compose --profile staging up -d'"

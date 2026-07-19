@@ -1,0 +1,32 @@
+# Render.com blueprint — deploys the whole app (gateway + built web SPA) as ONE
+# web service, same shape as local `npm run stage`.
+#
+# Usage: Render dashboard → New → Blueprint → point at this repo. Render reads
+# this file, builds, and gives you https://<name>.onrender.com with TLS — which
+# upgrades the WebSocket to wss:// automatically (the client already derives
+# ws/wss from the page protocol).
+#
+# NOTE (free tier): the filesystem is EPHEMERAL — the embedded PGlite data and
+# uploaded media reset on every deploy/restart, and the service sleeps after
+# ~15 min idle (first request takes ~30s to wake). Fine for a learning demo.
+# The durable path is ADAPTERS=external + managed Postgres/Redis/S3 — see
+# docs/deployment.md §3.
+services:
+  - type: web
+    name: dcom
+    runtime: node
+    plan: free
+    buildCommand: npm install && npm run build
+    startCommand: node apps/gateway/dist/apps/gateway/src/main.js
+    healthCheckPath: /
+    envVars:
+      - key: ADAPTERS
+        value: embedded
+      - key: DATA_DIR
+        value: /tmp/dcom-data
+      - key: JWT_SECRET
+        generateValue: true          # Render mints a strong random secret
+      - key: OTP_MODE
+        value: mock                  # codes are returned to the UI — demo only!
+      - key: STUN_URL
+        value: stun:stun.l.google.com:19302   # public STUN so calls work across real NATs

@@ -1,0 +1,94 @@
+# ============================================================================
+# Dcom — containerized stack (Postgres, Redis, MinIO, coturn, LiveKit, gateway).
+#
+# NOTE: this machine currently has no Docker/WSL2, so local dev runs the
+# gateway in EMBEDDED mode (ADAPTERS=embedded → PGlite + in-memory KV + disk
+# blobs). This file is the production-pattern path: install Docker Desktop
+# (with WSL2), then:   docker compose up -d   and start the gateway with
+# ADAPTERS=external — no code changes, only adapters swap. That swap being
+# trivial is the entire point of the ports-and-adapters layer.
+# ============================================================================
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: dcom
+      POSTGRES_PASSWORD: dcom_dev_pw
+      POSTGRES_DB: dcom
+    ports: ["5432:5432"]
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+      - ./infra/postgres/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dcom"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--maxmemory", "256mb", "--maxmemory-policy", "noeviction"]
+    ports: ["6379:6379"]
+
+  minio:
+    image: minio/minio:latest
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minio_dev
+      MINIO_ROOT_PASSWORD: minio_dev_pw
+    ports: ["9000:9000", "9001:9001"]
+    volumes:
+      - minio_data:/data
+
+  minio-init:
+    image: minio/mc:latest
+    depends_on: [minio]
+    entrypoint: >
+      /bin/sh -c "
+      until mc alias set local http://minio:9000 minio_dev minio_dev_pw; do sleep 1; done;
+      mc mb --ignore-existing local/media;
+      mc anonymous set download local/media;
+      "
+
+  # STUN/TURN for calls that leave the LAN. On localhost, WebRTC host
+  # candidates connect directly and neither is needed — which is why the
+  # embedded mode works without this container.
+  coturn:
+    image: coturn/coturn:latest
+    network_mode: host
+    volumes:
+      - ./infra/coturn/turnserver.conf:/etc/coturn/turnserver.conf:ro
+
+  # SFU — the scale path for room video (mesh tops out around 4 participants;
+  # see docs/mtr-mode.md for the mesh→SFU decision).
+  livekit:
+    image: livekit/livekit-server:latest
+    command: --config /etc/livekit.yaml
+    ports:
+      - "7880:7880"
+      - "7881:7881"
+      - "50000-50060:50000-50060/udp"
+    volumes:
+      - ./infra/livekit/livekit.yaml:/etc/livekit.yaml:ro
+    depends_on: [redis]
+
+  gateway:
+    profiles: ["staging"]
+    build:
+      context: .
+      dockerfile: apps/gateway/Dockerfile
+    environment:
+      ADAPTERS: external
+      DATABASE_URL: postgres://dcom:dcom_dev_pw@postgres:5432/dcom
+      REDIS_URL: redis://redis:6379
+      S3_ENDPOINT: http://minio:9000
+      JWT_SECRET: ${JWT_SECRET:?set in .env}
+    ports: ["3000:3000"]
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_started }
+
+volumes:
+  pg_data:
+  minio_data:

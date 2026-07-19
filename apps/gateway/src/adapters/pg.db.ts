@@ -1,0 +1,34 @@
+import { Pool } from 'pg';
+import { DbPort } from '../ports/ports';
+
+/**
+ * Real Postgres adapter (docker-compose / staging / production path).
+ *
+ * Pool sizing note: WS gateways hold long-lived processes, so pools never
+ * "drain between requests" like in serverless. 10 connections per instance is
+ * plenty for the MVP; the scaling fix when instances multiply is PgBouncer in
+ * transaction mode, NOT bigger pools (README "what breaks first" #1).
+ */
+export class PgDb implements DbPort {
+  private pool!: Pool;
+
+  async init(databaseUrl: string, schemaSql: string): Promise<void> {
+    this.pool = new Pool({ connectionString: databaseUrl, max: 10 });
+    // Idempotent bootstrap: compose also applies schema.sql on first boot, but
+    // running it here too means a bare Postgres (no init volume) also works.
+    await this.pool.query(schemaSql);
+  }
+
+  async query<T = any>(sql: string, params: unknown[] = []): Promise<{ rows: T[] }> {
+    const res = await this.pool.query(sql, params as any[]);
+    return { rows: res.rows as T[] };
+  }
+
+  async exec(sql: string): Promise<void> {
+    await this.pool.query(sql);
+  }
+
+  async close(): Promise<void> {
+    await this.pool.end();
+  }
+}

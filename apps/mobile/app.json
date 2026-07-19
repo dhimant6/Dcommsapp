@@ -1,0 +1,23 @@
+﻿{
+  "expo": {
+    "name": "Dcom",
+    "slug": "dcom",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "scheme": "ucollab",
+    "ios": {
+      "bundleIdentifier": "com.learning.dcom",
+      "infoPlist": {
+        "NSMicrophoneUsageDescription": "Needed for voice calls.",
+        "NSCameraUsageDescription": "Needed for video calls and photo messages.",
+        "NSPhotoLibraryUsageDescription": "Needed to send photos in chats."
+      }
+    },
+    "android": {
+      "package": "com.learning.dcom",
+      "permissions": ["RECORD_AUDIO", "CAMERA", "POST_NOTIFICATIONS"]
+    },
+    "plugins": ["expo-sqlite", "expo-secure-store"]
+  }
+}
+

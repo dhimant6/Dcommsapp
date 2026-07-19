@@ -1,0 +1,24 @@
+# LiveKit SFU — dev config for group calls.
+#
+# Flow: our gateway mints a LiveKit access token (room grant, signed with the
+# api secret below) → client connects DIRECTLY to LiveKit with that token →
+# media flows client↔SFU. Our gateway never touches media bytes; it is only
+# the token authority. This is the same pattern as S3 presigned URLs: the API
+# authorizes, a specialized data plane carries the bytes.
+
+port: 7880
+
+rtc:
+  tcp_port: 7881          # fallback when UDP is blocked (hotel/corp Wi-Fi)
+  port_range_start: 50000
+  port_range_end: 50060   # narrow range for dev; production opens thousands
+  use_external_ip: false  # true in cloud deploys (NAT'd VMs must advertise public IP)
+
+keys:
+  # Must match LIVEKIT_API_KEY / LIVEKIT_API_SECRET in .env.
+  devkey: devsecret_at_least_32_characters_long
+
+# Redis makes LiveKit multi-node capable (room→node routing). Single node
+# doesn't need it, but wiring it now demonstrates the scale-out story.
+redis:
+  address: redis:6379

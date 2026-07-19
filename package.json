@@ -1,0 +1,20 @@
+{
+  "name": "dcomapp",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Dcom — WhatsApp-style messaging + MTR-style room video devices. Learning project: two-pipe architecture, offline-first, ports-and-adapters.",
+  "workspaces": [
+    "packages/shared",
+    "apps/gateway",
+    "apps/web"
+  ],
+  "scripts": {
+    "gateway:dev": "npm run start:dev --workspace apps/gateway",
+    "web:dev": "npm run dev --workspace apps/web",
+    "build": "npm run build --workspace apps/gateway && npm run build --workspace apps/web",
+    "test": "npm test --workspace apps/gateway",
+    "stage": "npm run build && npm run start:staging --workspace apps/gateway",
+    "infra:up": "docker compose up -d",
+    "infra:down": "docker compose down"
+  }
+}
