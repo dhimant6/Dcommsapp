@@ -8,10 +8,12 @@ messages are 'pending' rows first; sync cursor = MAX(created_at) → `?since=`).
 
 ## Status
 
-**Skeleton, not yet runnable end-to-end** — chat screens are contract-documented
-placeholders; the web client (`apps/web`) is the fully working reference
-implementation of the same protocol. The dev machine for this repo has no
-Android SDK/emulator, so mobile work needs:
+**Chat implemented, awaiting on-device verification.** The chat list and chat
+room screens are real now: both render exclusively from SQLite (`db/chatRepo.ts`),
+`sync/chatSync.ts` implements the four-rule sync model (REST `?since=` cursors,
+optimistic 'pending' rows with reconnect replay, WS events upserting into the
+DB), and receipts/ticks flow end-to-end. Typechecks clean; it has NOT yet been
+exercised on a device/emulator — this repo's dev machine has neither. To run it:
 
 1. `cd apps/mobile && npm install`
 2. `npx expo start` → Expo Go on a phone on the same Wi-Fi

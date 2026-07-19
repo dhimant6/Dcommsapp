@@ -32,7 +32,8 @@ export async function getDb(): Promise<SQLite.SQLiteDatabase> {
       kind          TEXT NOT NULL,
       title         TEXT,
       last_msg_at   INTEGER,            -- denormalized for ORDER BY in the list
-      unread_count  INTEGER NOT NULL DEFAULT 0
+      unread_count  INTEGER NOT NULL DEFAULT 0,
+      preview       TEXT NOT NULL DEFAULT ''  -- denormalized last-message line
     );
 
     CREATE TABLE IF NOT EXISTS messages (
