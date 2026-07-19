@@ -98,17 +98,17 @@ function Bubble({ m, own }: { m: MsgRow; own: boolean }) {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#efeae2' },
+  root: { flex: 1, backgroundColor: '#e9eef7' },
   list: { flex: 1, paddingHorizontal: 10 },
   bubble: { maxWidth: '82%', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 6, marginVertical: 2 },
-  own: { alignSelf: 'flex-end', backgroundColor: '#d9fdd3' },
+  own: { alignSelf: 'flex-end', backgroundColor: '#dbeafe' },
   theirs: { alignSelf: 'flex-start', backgroundColor: '#fff' },
   body: { fontSize: 15, color: '#111b21' },
   stamp: { fontSize: 10, color: '#667781', alignSelf: 'flex-end', marginTop: 2 },
-  read: { color: '#53bdeb' },
+  read: { color: '#2563eb' },
   composer: { flexDirection: 'row', alignItems: 'flex-end', gap: 8, padding: 8, backgroundColor: '#f0f2f5' },
   input: { flex: 1, backgroundColor: '#fff', borderRadius: 20, paddingHorizontal: 14, paddingVertical: 8, fontSize: 15, maxHeight: 110 },
-  sendBtn: { backgroundColor: '#128c7e', borderRadius: 22, width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
+  sendBtn: { backgroundColor: '#2563eb', borderRadius: 22, width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
   sendBtnOff: { opacity: 0.5 },
   sendText: { color: '#fff', fontSize: 18 },
 });

@@ -1,14 +1,15 @@
 /* Dcom web — one stylesheet, two personalities (chat light, kiosk dark). */
 * { box-sizing: border-box; margin: 0; }
 :root {
-  --brand: #128c7e;
-  --brand-dark: #075e54;
-  --bg: #eae6df;
+  --brand: #2563eb;
+  --brand-dark: #1e40af;
+  --accent: #3b82f6;
+  --bg: #e8edf5;
   --panel: #ffffff;
-  --bubble-own: #d9fdd3;
+  --bubble-own: #dbeafe;
   --ink: #111b21;
   --muted: #667781;
-  --tick-read: #53bdeb;
+  --tick-read: #2563eb;
   --danger: #dc3545;
 }
 body { font-family: 'Segoe UI', system-ui, sans-serif; color: var(--ink); background: var(--bg); }
@@ -50,9 +51,9 @@ label { font-size: 13px; color: var(--muted); }
 .conv-meta { flex: 1; min-width: 0; }
 .conv-title { font-weight: 600; }
 .conv-preview { font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.badge { background: #25d366; color: #fff; border-radius: 12px; font-size: 12px; padding: 2px 8px; }
+.badge { background: var(--accent); color: #fff; border-radius: 12px; font-size: 12px; padding: 2px 8px; }
 
-.thread { display: flex; flex-direction: column; height: 100vh; background: #efeae2; }
+.thread { display: flex; flex-direction: column; height: 100vh; background: #e9eef7; }
 .thread.empty { display: grid; place-items: center; }
 .thread-header { display: flex; justify-content: space-between; align-items: center; padding: 10px 16px; background: #f0f2f5; border-bottom: 1px solid #e0e0e0; }
 .thread-actions { display: flex; gap: 8px; }
@@ -105,14 +106,14 @@ label { font-size: 13px; color: var(--muted); }
 .kiosk-root { background: #0b141a; color: #e9edef; min-height: 100vh; }
 .center-page.kiosk { background: #0b141a; }
 .center-page.kiosk .card { background: #202c33; color: #e9edef; }
-.center-page.kiosk h1 { color: #25d366; }
+.center-page.kiosk h1 { color: #60a5fa; }
 .kiosk-hub { display: grid; grid-template-rows: 1fr auto; min-height: 100vh; padding: 6vh 8vw; }
 .kiosk-clock .time { font-size: 96px; font-weight: 200; }
 .kiosk-clock .date { font-size: 24px; }
-.kiosk-clock .room-name { font-size: 32px; margin-top: 24px; color: #25d366; font-weight: 600; }
+.kiosk-clock .room-name { font-size: 32px; margin-top: 24px; color: #60a5fa; font-weight: 600; }
 .kiosk-actions { display: flex; gap: 24px; align-items: center; flex-wrap: wrap; padding-bottom: 4vh; }
 .kiosk-btn { font-size: 20px; padding: 18px 32px; border-radius: 12px; background: #2a3942; color: #e9edef; }
-.kiosk-btn.primary { background: #25d366; color: #0b141a; font-weight: 700; }
+.kiosk-btn.primary { background: #3b82f6; color: #fff; font-weight: 700; }
 .kiosk-btn.danger { background: var(--danger); color: #fff; }
 .kiosk-join { display: flex; gap: 12px; }
 .kiosk-input { font-size: 20px; padding: 16px; width: 320px; border-radius: 12px; border: 1px solid #2a3942; background: #111b21; color: #e9edef; margin: 0; letter-spacing: 2px; }

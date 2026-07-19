@@ -69,11 +69,11 @@ const styles = StyleSheet.create({
   list: { flex: 1, backgroundColor: '#fff' },
   empty: { color: '#888', textAlign: 'center', padding: 32 },
   row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: '#eee' },
-  avatar: { width: 44, height: 44, borderRadius: 22, backgroundColor: '#128c7e', alignItems: 'center', justifyContent: 'center' },
+  avatar: { width: 44, height: 44, borderRadius: 22, backgroundColor: '#2563eb', alignItems: 'center', justifyContent: 'center' },
   avatarText: { color: '#fff', fontSize: 18, fontWeight: '600' },
   meta: { flex: 1 },
   title: { fontSize: 16, fontWeight: '600', color: '#111b21' },
   preview: { fontSize: 13, color: '#667781', marginTop: 2 },
-  badge: { backgroundColor: '#25d366', borderRadius: 12, minWidth: 24, paddingHorizontal: 7, paddingVertical: 2, alignItems: 'center' },
+  badge: { backgroundColor: '#3b82f6', borderRadius: 12, minWidth: 24, paddingHorizontal: 7, paddingVertical: 2, alignItems: 'center' },
   badgeText: { color: '#fff', fontSize: 12, fontWeight: '700' },
 });
