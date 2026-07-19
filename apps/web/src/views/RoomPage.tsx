@@ -152,8 +152,12 @@ function Tile({ name, stream, state, mutedVideo }: { name: string; stream: Media
         <div className="tile-avatar">
           <div className="avatar big">{name.slice(0, 1).toUpperCase()}</div>
           {/* No camera ≠ not connected: audio/viewer participants are normal
-              on room hardware. Connection state shows the mesh truth. */}
-          <span className="muted">{state === 'connected' ? 'connected (no camera)' : (state ?? 'connecting…')}</span>
+              on room hardware. Connection state shows the mesh truth — except
+              for the local tile (mutedVideo), which has no peer connection to
+              report on; "connecting…" there would be a lie. */}
+          <span className="muted">
+            {mutedVideo ? 'camera off' : state === 'connected' ? 'connected (no camera)' : (state ?? 'connecting…')}
+          </span>
         </div>
       )}
       <span className="tile-name">{name}</span>
