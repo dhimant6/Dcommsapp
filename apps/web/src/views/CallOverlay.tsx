@@ -14,8 +14,18 @@ export function CallOverlay() {
   const [rtc, setRtc] = useState<RtcManager | null>(null);
   const [state, setState] = useState('idle');
   const [muted, setMuted] = useState(false);
+  const [mediaNote, setMediaNote] = useState('');
   const localRef = useRef<HTMLVideoElement>(null);
   const remoteRef = useRef<HTMLVideoElement>(null);
+
+  // "Video is blank" almost always means a device/permission problem on ONE
+  // side, not a connection problem — say so instead of leaving a black tile.
+  const describeLocal = (stream: MediaStream | null) => {
+    if (!stream) setMediaNote('mic/camera unavailable — check browser permission (lock icon in the address bar)');
+    else if (stream.getVideoTracks().length === 0 && (active?.kind === 'video' || incoming?.kind === 'video'))
+      setMediaNote('no camera found/allowed — sending audio only');
+    else setMediaNote('');
+  };
 
   // Outgoing leg
   useEffect(() => {
@@ -26,7 +36,10 @@ export function CallOverlay() {
         setState(st);
         if (st === 'closed' || st === 'failed') endCall(mgr);
       },
-      onLocalStream: (stream) => localRef.current && (localRef.current.srcObject = stream),
+      onLocalStream: (stream) => {
+        if (localRef.current) localRef.current.srcObject = stream;
+        describeLocal(stream);
+      },
     });
     setRtc(mgr);
     void (async () => {
@@ -46,7 +59,10 @@ export function CallOverlay() {
         setState(st);
         if (st === 'closed' || st === 'failed') endCall(mgr);
       },
-      onLocalStream: (stream) => localRef.current && (localRef.current.srcObject = stream),
+      onLocalStream: (stream) => {
+        if (localRef.current) localRef.current.srcObject = stream;
+        describeLocal(stream);
+      },
     });
     setRtc(mgr);
     await mgr.init(incoming.kind);
@@ -92,6 +108,7 @@ export function CallOverlay() {
       <div className="call-stage">
         <video ref={remoteRef} autoPlay playsInline className="remote-video" />
         <video ref={localRef} autoPlay playsInline muted className="local-video" />
+        {mediaNote && <div className="media-note">{mediaNote}</div>}
         <div className="call-bar">
           <span>{active.peerName} — {state}</span>
           <button className="small" onClick={() => rtc && setMuted(rtc.toggleMute())}>{muted ? '🔇' : '🎙️'}</button>

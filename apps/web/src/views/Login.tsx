@@ -1,4 +1,4 @@
-import { FormEvent, useState } from 'react';
+import { FormEvent, useEffect, useState } from 'react';
 import { api, setTokens } from '../api';
 import { wsConnect } from '../socket';
 import { useStore } from '../store';
@@ -15,15 +15,27 @@ export function Login({ roomMode }: { roomMode: boolean }) {
   const [phone, setPhone] = useState('+91');
   const [name, setName] = useState('');
   const [code, setCode] = useState('');
+  const [gateCode, setGateCode] = useState('');
+  const [gated, setGated] = useState(false);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+
+  // Ask the server whether an access code is required (GATE_CODE env set).
+  useEffect(() => {
+    void api<{ gated: boolean }>('GET', '/api/auth/gate')
+      .then((g) => setGated(g.gated))
+      .catch(() => {});
+  }, []);
 
   const requestOtp = async (e: FormEvent) => {
     e.preventDefault();
     setBusy(true);
     setError('');
     try {
-      const res = await api<{ devCode?: string }>('POST', '/api/auth/otp/request', { phone });
+      const res = await api<{ devCode?: string }>('POST', '/api/auth/otp/request', {
+        phone,
+        gateCode: gateCode || undefined,
+      });
       if (res.devCode) setCode(res.devCode); // mock mode convenience
       setStep('code');
     } catch (err: any) {
@@ -43,6 +55,7 @@ export function Login({ roomMode }: { roomMode: boolean }) {
         code,
         platform: roomMode ? 'room' : 'web',
         displayName: name || undefined,
+        gateCode: gateCode || undefined,
       });
       setTokens(pair);
       if (roomMode) await api('PATCH', '/api/me', { isRoomDevice: true });
@@ -67,6 +80,12 @@ export function Login({ roomMode }: { roomMode: boolean }) {
             <input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+919876543210" autoFocus />
             <label>{roomMode ? 'Room name' : 'Display name'}</label>
             <input value={name} onChange={(e) => setName(e.target.value)} placeholder={roomMode ? 'Boardroom 4A' : 'Alice'} />
+            {gated && (
+              <>
+                <label>Access code</label>
+                <input value={gateCode} onChange={(e) => setGateCode(e.target.value)} placeholder="from your invite" />
+              </>
+            )}
             <button disabled={busy}>{busy ? 'Sending…' : 'Send code'}</button>
           </form>
         ) : (

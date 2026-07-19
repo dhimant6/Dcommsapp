@@ -74,6 +74,7 @@ label { font-size: 13px; color: var(--muted); }
 .remote-video { width: 100%; height: 100%; background: #000; border-radius: 12px; object-fit: cover; }
 .local-video { position: absolute; right: 16px; bottom: 72px; width: 180px; border-radius: 8px; background: #222; }
 .call-bar { position: absolute; left: 0; right: 0; bottom: 12px; display: flex; gap: 12px; justify-content: center; align-items: center; color: #fff; }
+.media-note { position: absolute; top: 12px; left: 50%; transform: translateX(-50%); background: rgba(255, 193, 7, .92); color: #111; padding: 6px 14px; border-radius: 8px; font-size: 13px; }
 
 /* ---------- kiosk (MTR) ---------- */
 .kiosk-root { background: #0b141a; color: #e9edef; min-height: 100vh; }

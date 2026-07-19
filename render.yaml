@@ -33,5 +33,10 @@ services:
         generateValue: true          # Render mints a strong random secret
       - key: OTP_MODE
         value: mock                  # codes are returned to the UI — demo only!
+      - key: GATE_CODE
+        sync: false                  # Render asks YOU for the value: pick a memorable
+                                     # access code and share it only with invitees.
+                                     # Required because mock OTP would otherwise let
+                                     # anyone on the internet sign in as any number.
       - key: STUN_URL
         value: stun:stun.l.google.com:19302   # public STUN so calls work across real NATs

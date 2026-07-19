@@ -28,6 +28,12 @@ export const config = {
 
   otpMode: req('OTP_MODE', 'mock') as 'mock' | 'twilio',
 
+  /** Demo gate: when set, signing in additionally requires this shared access
+   *  code. Because OTP_MODE=mock returns codes to anyone, a public deployment
+   *  would otherwise let strangers impersonate any phone number. The gate
+   *  turns "public demo" into "invite-only demo" with one env var. */
+  gateCode: process.env.GATE_CODE || undefined,
+
   databaseUrl: process.env.DATABASE_URL,
   redisUrl: process.env.REDIS_URL,
 

@@ -14,7 +14,7 @@ export function ChatPage() {
       useStore.getState().set({ conversations: convs });
       // Presence snapshot for everyone in the sidebar; deltas arrive via WS.
       const ids = new Set<string>();
-      convs.forEach((c) => c.members.forEach((m) => m.id !== s.user!.id && ids.add(m.id)));
+      convs.forEach((c) => (c.members ?? []).forEach((m) => m.id !== s.user!.id && ids.add(m.id)));
       if (ids.size) {
         void api<any>('GET', `/api/presence?ids=${[...ids].join(',')}`).then((p) =>
           useStore.getState().set({ presence: p }),
@@ -50,13 +50,21 @@ export function ChatPage() {
   );
 }
 
+function safeParse(s: string): any {
+  try {
+    return JSON.parse(s);
+  } catch {
+    return { body: s };
+  }
+}
+
 function ConvRow({ conv }: { conv: Conv }) {
   const s = useStore();
-  const peer = conv.kind === 'direct' ? conv.members.find((m) => m.id !== s.user!.id) : null;
+  const peer = conv.kind === 'direct' ? (conv.members ?? []).find((m) => m.id !== s.user!.id) : null;
   const online = peer && s.presence[peer.id]?.status === 'online';
   const preview = conv.lastMessage
     ? conv.lastMessage.type === 'text'
-      ? conv.lastMessage.content.body
+      ? (conv.lastMessage.content?.body ?? '')
       : `[${conv.lastMessage.type}]`
     : '';
   return (
@@ -64,7 +72,7 @@ function ConvRow({ conv }: { conv: Conv }) {
       className={`conv-row ${s.activeConvId === conv.id ? 'active' : ''}`}
       onClick={() => useStore.getState().set({ activeConvId: conv.id })}
     >
-      <div className="avatar">{conv.title.slice(0, 1).toUpperCase()}{online && <span className="online-dot" />}</div>
+      <div className="avatar">{(conv.title ?? '?').slice(0, 1).toUpperCase()}{online && <span className="online-dot" />}</div>
       <div className="conv-meta">
         <div className="conv-title">{conv.title}</div>
         <div className="conv-preview muted">{preview}</div>
@@ -78,11 +86,12 @@ function Thread({ conv }: { conv: Conv }) {
   const s = useStore();
   const msgs = s.messages[conv.id] ?? [];
   const bottomRef = useRef<HTMLDivElement>(null);
-  const peer = conv.kind === 'direct' ? conv.members.find((m) => m.id !== s.user!.id) : null;
+  const members = conv.members ?? [];
+  const peer = conv.kind === 'direct' ? members.find((m) => m.id !== s.user!.id) : null;
   const presence = peer ? s.presence[peer.id] : null;
   const typingNames = Object.entries(s.typing[conv.id] ?? {})
     .filter(([, until]) => until > Date.now())
-    .map(([uid]) => conv.members.find((m) => m.id === uid)?.displayName ?? '');
+    .map(([uid]) => members.find((m) => m.id === uid)?.displayName ?? '');
 
   useEffect(() => {
     // Open a page of history, then read-ack what we received (batched — one
@@ -147,7 +156,7 @@ function Thread({ conv }: { conv: Conv }) {
                   : presence.lastSeenAt
                     ? `last seen ${new Date(presence.lastSeenAt).toLocaleTimeString()}`
                     : 'offline'
-                : `${conv.members.length} members`}
+                : `${members.length} members`}
           </div>
         </div>
         <div className="thread-actions">
@@ -169,17 +178,20 @@ function Thread({ conv }: { conv: Conv }) {
 
 function Bubble({ m, own, group }: { m: UiMessage; own: boolean; group: boolean }) {
   const ticks = own ? (m.status === 'read' ? '✓✓' : m.status === 'delivered' ? '✓✓' : m.status === 'sent' ? '✓' : '🕐') : '';
+  // Never trust a single message's shape enough to let it crash the page — a
+  // malformed row should render as an empty bubble, not a blank app.
+  const content = (typeof m.content === 'string' ? safeParse(m.content) : m.content) ?? {};
   return (
     <div className={`bubble ${own ? 'own' : ''}`}>
       {group && !own && <div className="sender">{m.senderName}</div>}
-      {m.msgType === 'image' && m.content.url && <img src={m.content.url} alt="" className="msg-img" />}
+      {m.msgType === 'image' && content.url && <img src={content.url} alt="" className="msg-img" />}
       {m.msgType === 'meeting' ? (
         <div className="meeting-chip">
-          📺 {m.content.body}
-          <a href={`#/room?code=${m.content.roomCode}`}> Join</a>
+          📺 {content.body}
+          <a href={`#/room?code=${content.roomCode}`}> Join</a>
         </div>
       ) : (
-        m.content.body && <span>{m.content.body}</span>
+        content.body && <span>{content.body}</span>
       )}
       <span className={`ticks ${m.status === 'read' ? 'read' : ''}`}>
         {new Date(m.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} {ticks}

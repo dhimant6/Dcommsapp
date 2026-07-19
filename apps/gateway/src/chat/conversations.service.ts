@@ -132,7 +132,14 @@ export class ConversationsService {
         title: r.kind === 'direct' ? (peers[0]?.display_name ?? 'Unknown') : r.title,
         members: members.rows.map((m: any) => ({ id: m.id, displayName: m.display_name, phone: m.phone_e164 })),
         lastMessage: r.last_msg_at
-          ? { type: r.last_type, content: r.last_content, at: new Date(r.last_msg_at).getTime(), sender: r.last_sender }
+          ? {
+              type: r.last_type,
+              // Defensive: JSONB normally arrives as an object, but never let a
+              // driver quirk ship a raw string to clients expecting an object.
+              content: typeof r.last_content === 'string' ? JSON.parse(r.last_content) : r.last_content,
+              at: new Date(r.last_msg_at).getTime(),
+              sender: r.last_sender,
+            }
           : null,
         unread: unread.rows[0].n,
       });
