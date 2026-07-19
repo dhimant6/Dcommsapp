@@ -26,6 +26,17 @@ Same code; adapters swap via env. `infra/postgres/schema.sql` auto-applies on
 first boot. MinIO console: :9001. To run the gateway on the host against the
 containers instead: `ADAPTERS=external npm run gateway:dev`.
 
+## 2.5 Cheap persistence on free hosting (`ADAPTERS=auto`)
+
+Free tiers have ephemeral filesystems — embedded data dies on every deploy.
+`ADAPTERS=auto` decides **per port**: external where config exists, embedded
+otherwise. So on Render, adding a single `DATABASE_URL` (free Postgres from
+neon.tech) makes chat history durable, while KV stays in-memory (correct for a
+single instance — it only becomes wrong at 2+ instances) and media stays on
+ephemeral disk (acceptable). Add `REDIS_URL` (Upstash) and `S3_*` (R2/MinIO)
+later, one at a time, as each limitation starts to matter. This gradual
+hardening is the ports-and-adapters pattern doing its job.
+
 ## 3. Cloud (the pattern, not a script)
 
 - **Gateway**: any container host (Fly.io/Railway/ECS). Needs: WebSocket

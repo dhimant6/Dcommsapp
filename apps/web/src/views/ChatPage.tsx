@@ -109,7 +109,14 @@ function Thread({ conv }: { conv: Conv }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [conv.id]);
 
-  useEffect(() => bottomRef.current?.scrollIntoView({ behavior: 'smooth' }), [msgs.length]);
+  // Braces matter: an implicit-return arrow would hand scrollIntoView's return
+  // value to React as the effect "cleanup". Natively that's undefined (fine),
+  // but smooth-scroll browser EXTENSIONS patch scrollIntoView to return a
+  // Promise — and React then crashes calling it ("n is not a function", the
+  // blank-page bug). Never implicit-return from useEffect.
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [msgs.length]);
 
   // Focus-to-read: messages that arrived while this tab was hidden were only
   // delivery-acked (socket.ts gates read_ack on visibility). Coming back to

@@ -17,8 +17,14 @@ export const config = {
   port: parseInt(req('PORT', '3000'), 10),
 
   /** 'embedded' = PGlite + in-memory KV + disk blobs (zero Docker).
-   *  'external' = Postgres + Redis + S3/MinIO from docker-compose. */
-  adapters: req('ADAPTERS', 'embedded') as 'embedded' | 'external',
+   *  'external' = Postgres + Redis + S3/MinIO from docker-compose.
+   *  'auto'     = PER PORT: external where its config env exists, embedded
+   *               otherwise. The cheap-persistence mode: on a host with an
+   *               ephemeral filesystem (Render free tier), setting just
+   *               DATABASE_URL makes chat history durable while KV stays
+   *               in-memory (correct for one instance) and media stays on
+   *               disk (acceptable loss). Add REDIS_URL / S3_* later. */
+  adapters: req('ADAPTERS', 'embedded') as 'embedded' | 'external' | 'auto',
 
   dataDir: path.resolve(req('DATA_DIR', './data')),
 

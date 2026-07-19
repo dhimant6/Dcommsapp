@@ -30,6 +30,15 @@ function loadSchema(): string {
   throw new Error('infra/postgres/schema.sql not found');
 }
 
+/** Per-port external/embedded decision. 'auto' picks external only when that
+ *  port's config env is present — so partial upgrades (e.g. just a managed
+ *  Postgres for persistence) need exactly one env var, not a full stack. */
+function wantExternal(hasConfig: boolean): boolean {
+  if (config.adapters === 'external') return true;
+  if (config.adapters === 'auto') return hasConfig;
+  return false;
+}
+
 @Global()
 @Module({
   providers: [
@@ -37,32 +46,36 @@ function loadSchema(): string {
       provide: DB,
       useFactory: async (): Promise<DbPort> => {
         const schema = loadSchema();
-        if (config.adapters === 'external') {
+        if (wantExternal(!!config.databaseUrl)) {
           const db = new PgDb();
           await db.init(config.databaseUrl!, schema);
+          console.log('[adapters] DB: postgres');
           return db;
         }
         const db = new PgliteDb();
         const dir = process.env.PGLITE_DIR ?? path.join(config.dataDir, 'pglite');
         await db.init(dir, schema);
+        console.log('[adapters] DB: pglite (embedded)');
         return db;
       },
     },
     {
       provide: KV,
       useFactory: async (): Promise<KvPort> => {
-        if (config.adapters === 'external') {
+        if (wantExternal(!!config.redisUrl)) {
           const kv = new RedisKv();
           await kv.init(config.redisUrl!);
+          console.log('[adapters] KV: redis');
           return kv;
         }
+        console.log('[adapters] KV: in-memory (single instance only)');
         return new MemoryKv();
       },
     },
     {
       provide: BLOB,
       useFactory: async (): Promise<BlobPort> => {
-        if (config.adapters === 'external') {
+        if (wantExternal(!!(config.s3.endpoint && config.s3.accessKey && config.s3.secretKey))) {
           const blob = new S3Blob();
           await blob.init({
             endpoint: config.s3.endpoint!,
@@ -70,10 +83,12 @@ function loadSchema(): string {
             accessKey: config.s3.accessKey!,
             secretKey: config.s3.secretKey!,
           });
+          console.log('[adapters] BLOB: s3');
           return blob;
         }
         const blob = new DiskBlob(path.join(config.dataDir, 'media'));
         await blob.init();
+        console.log('[adapters] BLOB: disk');
         return blob;
       },
     },

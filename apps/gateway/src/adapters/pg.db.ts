@@ -13,7 +13,16 @@ export class PgDb implements DbPort {
   private pool!: Pool;
 
   async init(databaseUrl: string, schemaSql: string): Promise<void> {
-    this.pool = new Pool({ connectionString: databaseUrl, max: 10 });
+    // Managed Postgres (Neon/Render/Supabase) requires TLS; node-postgres does
+    // not reliably infer it from the URL, so switch it on whenever the URL asks
+    // for it. rejectUnauthorized:false accepts the provider's CA chain without
+    // shipping cert bundles — fine for a learning app, noted as a prod gap.
+    const wantsSsl = /sslmode=require|\.neon\.tech|render\.com|supabase\.co/.test(databaseUrl);
+    this.pool = new Pool({
+      connectionString: databaseUrl,
+      max: 10,
+      ssl: wantsSsl ? { rejectUnauthorized: false } : undefined,
+    });
     // Idempotent bootstrap: compose also applies schema.sql on first boot, but
     // running it here too means a bare Postgres (no init volume) also works.
     await this.pool.query(schemaSql);

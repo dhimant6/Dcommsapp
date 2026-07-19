@@ -25,8 +25,12 @@ services:
     envVars:
       - key: NODE_VERSION
         value: 22.16.0               # match the Node major used in development
+      # 'auto' = per-port: with no extra env vars this behaves exactly like
+      # 'embedded'. THE PERSISTENCE UPGRADE: add a DATABASE_URL env var (free
+      # Postgres from neon.tech) and chat history survives restarts/deploys —
+      # no other changes. Later add REDIS_URL / S3_* the same way.
       - key: ADAPTERS
-        value: embedded
+        value: auto
       - key: DATA_DIR
         value: /tmp/dcom-data
       - key: JWT_SECRET
