@@ -16,10 +16,15 @@ services:
     name: dcom
     runtime: node
     plan: free
-    buildCommand: npm install && npm run build
+    # --include=dev is REQUIRED: Render sets NODE_ENV=production, which makes
+    # a bare `npm install` skip devDependencies — and the build tools (tsc,
+    # vite) live there. Classic CI/PaaS gotcha.
+    buildCommand: npm install --include=dev && npm run build
     startCommand: node apps/gateway/dist/apps/gateway/src/main.js
     healthCheckPath: /
     envVars:
+      - key: NODE_VERSION
+        value: 22.16.0               # match the Node major used in development
       - key: ADAPTERS
         value: embedded
       - key: DATA_DIR
